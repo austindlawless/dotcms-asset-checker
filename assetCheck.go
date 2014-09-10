@@ -12,21 +12,46 @@ type AssetsCheck struct {
 func (f *AssetsCheck) Check() (error) {
 	log.Println("Assets Checking")
 
-	rows, err := f.MySql.db.Query("SELECT firstname, lastname FROM user_;")
+	rows, err := f.MySql.db.Query("SELECT inode FROM contentlet;")
 
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	var firstname string
-	var lastname string
+	var inode string
+	var path string
 
 	for rows.Next() {
-		rows.Scan(&firstname, &lastname)
+		rows.Scan(&inode)
 
-		log.Println(firstname + " " + lastname)
+		// @todo make this a config param
+		path = "/var/bv/apps/dotcms/assets/" + inode[0:1] + "/" + inode[1:2] + "/" + inode
+
+		// log.Println(inode + " -> " + path)
+
+		exixsts, _ := exists(path)
+
+		if exixsts == true {
+			log.Println("Inode exists")
+		}
 	}
 
+	log.Println("Done")
+
 	return nil
+}
+
+func exists(path string) (bool, error) {
+    _, err := os.Stat(path)
+
+    if err == nil {
+    	return true, nil
+    }
+
+    if os.IsNotExist(err) { 
+    	return false, nil 
+    }
+
+    return false, err
 }

@@ -7,11 +7,9 @@ import (
 	"os"
 )
 
-type DatabaseNameConfig map[string]string
-
-func NewMySql(user string, password string, host string, dbNames DatabaseNameConfig) *MySql {
+func NewMySql(user string, password string, host string, dbName string) *MySql {
 	mysql := new(MySql)
-	con, err := sql.Open("mysql", user+":"+password+"@tcp("+host+":3306)/"+dbNames["SegundoDb"])
+	con, err := sql.Open("mysql", user+":"+password+"@tcp("+host+":3306)/"+dbName)
 
 	if err != nil {
 		fmt.Println(err)
@@ -19,14 +17,12 @@ func NewMySql(user string, password string, host string, dbNames DatabaseNameCon
 	}
 
 	mysql.db = con
-	mysql.dbNames = dbNames
 
 	return mysql
 }
 
 type MySql struct {
-	db      *sql.DB
-	dbNames DatabaseNameConfig
+	db *sql.DB
 }
 
 func (m *MySql) Close() {

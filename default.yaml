@@ -1,0 +1,4 @@
+host: mysqlhost
+db: dotcms
+user: mysqluser
+pass: mysqlpass

@@ -13,8 +13,8 @@ func (f *AssetsCheck) Check() (error) {
 	log.Println("Assets Checking")
 
 	rows, err := f.MySql.db.Query("SELECT c.inode " +
-									"FROM contentlet c" +
-									"JOIN field f ON c.structure_inode=f.structure_inode" +
+									"FROM contentlet c " +
+									"JOIN field f ON c.structure_inode=f.structure_inode " +
 									"WHERE f.field_type IN ('binary', 'image', 'file');")
 
 	if err != nil {

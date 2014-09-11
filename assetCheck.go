@@ -32,6 +32,11 @@ func (f *AssetsCheck) Check() (error) {
 
 		exixsts, _ := exists(path)
 
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+
 		if exixsts == true {
 			log.Println("Inode exists")
 		}

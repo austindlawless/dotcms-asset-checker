@@ -9,7 +9,7 @@ import (
 
 func NewMySql(user string, password string, host string, dbName string) *MySql {
 	mysql := new(MySql)
-	con, err := sql.Open("mysql", user+":"+password+"@tcp("+host+":3306)/"+dbName)
+	con, err := sql.Open("mysql", user+":"+password+"@tcp("+host+":3306)/"+dbName+"?allowOldPasswords=true")
 
 	if err != nil {
 		fmt.Println(err)

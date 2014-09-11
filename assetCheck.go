@@ -23,49 +23,14 @@ func (f *AssetsCheck) Check() (error) {
 		os.Exit(1)
 	}
 
-	var inode string
-	var assetToCheck string
 	var structure_inode string
-	var identifier string
 	var field_type string
 	var field_contentlet string
 
 	for fields.Next() {
 		fields.Scan(&structure_inode, &field_type, &field_contentlet)
 
-		// Only select working nodes
-		contentlets, err := f.MySql.db.Query("SELECT cl.inode, cl.identifier, cl.text3 AS assetToCheck " +
-											 "FROM contentlet cl " +
-											 "JOIN contentlet_version_info c ON c.identifier=cl.identifier AND c.working_inode=cl.inode "+
-											 "WHERE structure_inode=?", structure_inode)
-
-		defer contentlets.Close()
-
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-
-		for contentlets.Next() {
-			contentlets.Scan(&inode, &identifier, &assetToCheck)
-
-			if assetToCheck != "" {
-				// @todo make this a config param
-				path := "/var/bv/apps/dotcms/assets/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + field_contentlet + "/" + assetToCheck
-
-				exixsts, _ := exists(path)
-
-				if exixsts == true {
-					log.Println("Exists: " + path)
-				} else {
-					log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
-					log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
-					log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
-				}
-
-				// log.Println("	" + path)
-			}
-		}
+		f.validateContentlets(structure_inode, field_contentlet)
 	}
 
 	log.Println("Done")
@@ -73,7 +38,46 @@ func (f *AssetsCheck) Check() (error) {
 	return nil
 }
 
-func exists(path string) (bool, error) {
+func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_name string) (error) {
+	var inode string
+	var assetToCheck string
+
+	// Only select working nodes
+	contentlets, err := f.MySql.db.Query("SELECT cl.inode, cl.text3 AS assetToCheck " +
+										 "FROM contentlet cl " +
+										 "JOIN contentlet_version_info c ON c.identifier=cl.identifier AND c.working_inode=cl.inode "+
+										 "WHERE structure_inode=?", structure_inode)
+
+	defer contentlets.Close()
+
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	for contentlets.Next() {
+		contentlets.Scan(&inode, &assetToCheck)
+
+		if assetToCheck != "" {
+			// @todo make this a config param
+			path := "/var/bv/apps/dotcms/assets/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + asset_folder_name + "/" + assetToCheck
+
+			exixsts, _ := f.exists(path)
+
+			if exixsts == true {
+				log.Println("Exists: " + path)
+			} else {
+				log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
+				log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
+				log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
+			}
+		}
+	}
+
+	return nil
+}
+
+func (f *AssetsCheck) exists(path string) (bool, error) {
     _, err := os.Stat(path)
 
     if err == nil {

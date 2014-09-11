@@ -66,7 +66,9 @@ func (f *AssetsCheck) Check() (error) {
 				if exixsts == true {
 					log.Println("Exists: " + path)
 				} else {
+					log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
 					log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
+					log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
 				}
 
 				// log.Println("	" + path)

@@ -11,8 +11,6 @@ type AssetsCheck struct {
 }
 
 func (f *AssetsCheck) Check() (error) {
-	log.Println("Assets Checking")
-
 	fields, err := f.MySql.db.Query("SELECT f.structure_inode, f.field_type, f.velocity_var_name FROM field f " +
 									 "JOIN structure s ON s.inode = f.structure_inode " +
 									 "WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")
@@ -33,8 +31,6 @@ func (f *AssetsCheck) Check() (error) {
 
 		f.validateContentlets(structure_inode, field_contentlet)
 	}
-
-	log.Println("Done")
 
 	return nil
 }
@@ -60,17 +56,12 @@ func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_n
 		contentlets.Scan(&inode, &assetToCheck)
 
 		if assetToCheck != "" {
-			// @todo make this a config param
 			path := f.AssetsPath + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + asset_folder_name + "/" + assetToCheck
 
 			exixsts, _ := f.exists(path)
 
-			if exixsts == true {
-				log.Println("Exists: " + path)
-			} else {
-				log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
+			if !exixsts {
 				log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
-				log.Println("!!!!!!!!!!!!!!!!!!!!!!!!")
 			}
 		}
 	}

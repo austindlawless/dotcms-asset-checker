@@ -64,9 +64,9 @@ func (f *AssetsCheck) Check() (error) {
 				exixsts, _ := exists(path)
 
 				if exixsts == true {
-					log.Println("Inode exists")
+					log.Println("Exists: " + path)
 				} else {
-					log.Println("NOT FOUND! Contentlet: " + inode)
+					log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
 				}
 
 				// log.Println("	" + path)

@@ -7,6 +7,7 @@ import (
 
 type AssetsCheck struct {
 	MySql *MySql
+	AssetsPath string
 }
 
 func (f *AssetsCheck) Check() (error) {
@@ -60,7 +61,7 @@ func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_n
 
 		if assetToCheck != "" {
 			// @todo make this a config param
-			path := "/var/bv/apps/dotcms/assets/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + asset_folder_name + "/" + assetToCheck
+			path := f.AssetsPath + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + asset_folder_name + "/" + assetToCheck
 
 			exixsts, _ := f.exists(path)
 

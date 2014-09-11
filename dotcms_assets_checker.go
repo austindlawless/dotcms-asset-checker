@@ -17,6 +17,7 @@ func main() {
 	user := flag.String("user", "", "mysql user")
 	pass := flag.String("pass", "", "mysql password")
 	logPath := flag.String("log", "", "log path")
+	assets := flag.String("assets", "", "dotcms assets path")
 
 	flag.Parse()
 
@@ -24,6 +25,7 @@ func main() {
 		Host: *host,
 		User: *user,
 		Db: *db,
+		Assets: *assets,
 		Pass: *pass,
 		Log:  *logPath,
 	}
@@ -46,6 +48,6 @@ func main() {
 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 	defer mysql.Close()
 
-	var checker = &AssetsCheck{MySql : mysql};
+	var checker = &AssetsCheck{MySql : mysql, AssetsPath : config.Assets};
 	checker.Check()
 }

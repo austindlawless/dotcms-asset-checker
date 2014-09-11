@@ -12,6 +12,7 @@ type Config struct {
 	User string
 	Db string
 	Pass string
+	Assets string
 	Log  string
 }
 
@@ -40,8 +41,8 @@ func getConfigFromYaml(yamlPath string) (Config, error) {
 }
 
 func getConfig(flagCfg Config, yamlPath string) (Config, error) {
-
 	config, err := getConfigFromYaml(yamlPath)
+
 	if err != nil {
 		return config, err
 	}
@@ -50,6 +51,10 @@ func getConfig(flagCfg Config, yamlPath string) (Config, error) {
 
 	if len(flagCfg.Host) > 0 {
 		config.Host = flagCfg.Host
+	}
+
+	if len(flagCfg.Assets) > 0 {
+		config.Assets = flagCfg.Assets
 	}
 
 	if len(flagCfg.User) > 0 {

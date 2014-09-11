@@ -2,3 +2,4 @@ host: mysqlhost
 db: dotcms
 user: mysqluser
 pass: mysqlpass
+assetsPath: /var/bv/app/dotcms/backup/123123123

@@ -33,14 +33,14 @@ func main() {
 	config, err := getConfig(flagConfig, *yamlPath)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	if config.Log != "" {
 		f, err := os.OpenFile(config.Log, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			fmt.Println("error opening file: %v", err)
-			os.Exit(1)
+			os.Exit(2)
 		}
 		log.SetOutput(f)
 	}
@@ -49,5 +49,15 @@ func main() {
 	defer mysql.Close()
 
 	var checker = &AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
-	checker.Check()
+
+	isValid, err := checker.Check()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+
+	if !isValid {
+		os.Exit(1)
+	}
+
 }

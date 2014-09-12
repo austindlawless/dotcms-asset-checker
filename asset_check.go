@@ -10,7 +10,8 @@ type AssetsCheck struct {
 	AssetsPath string
 }
 
-func (f *AssetsCheck) Check() error {
+func (f *AssetsCheck) Check() (bool, error) {
+	var isValid = true
 	fields, err := f.MySql.db.Query("SELECT f.structure_inode, f.field_type, f.velocity_var_name FROM field f " +
 		"JOIN structure s ON s.inode = f.structure_inode " +
 		"WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")
@@ -18,8 +19,7 @@ func (f *AssetsCheck) Check() error {
 	defer fields.Close()
 
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	var structure_inode string
@@ -29,13 +29,21 @@ func (f *AssetsCheck) Check() error {
 	for fields.Next() {
 		fields.Scan(&structure_inode, &field_type, &field_contentlet)
 
-		f.validateContentlets(structure_inode, field_contentlet)
+		isBatchValid, err = f.areContentletsValid(structure_inode, field_contentlet)
+		if err != nil {
+			return err
+		}
+		if !isBatchValid {
+			isValid = false
+		}
+
 	}
 
-	return nil
+	return isValid
 }
 
-func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_name string) error {
+func (f *AssetsCheck) areContentletsValid(structure_inode string, asset_folder_name string) (bool, error) {
+	var isValid = true
 	var inode string
 	var assetToCheck string
 
@@ -48,8 +56,7 @@ func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_n
 	defer contentlets.Close()
 
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		return false, err
 	}
 
 	for contentlets.Next() {
@@ -58,15 +65,19 @@ func (f *AssetsCheck) validateContentlets(structure_inode string, asset_folder_n
 		if assetToCheck != "" {
 			path := f.AssetsPath + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + asset_folder_name + "/" + assetToCheck
 
-			exixsts, _ := f.exists(path)
+			pathExists, err := f.exists(path)
+			if err != nil {
+				return err
+			}
 
-			if !exixsts {
+			if !pathExists {
+				isValid = false
 				log.Println("NOT FOUND! Contentlet: " + inode + ", " + path)
 			}
 		}
 	}
 
-	return nil
+	return isValid
 }
 
 func (f *AssetsCheck) exists(path string) (bool, error) {

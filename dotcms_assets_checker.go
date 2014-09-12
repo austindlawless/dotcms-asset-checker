@@ -22,12 +22,12 @@ func main() {
 	flag.Parse()
 
 	flagConfig := Config{
-		Host: *host,
-		User: *user,
-		Db: *db,
+		Host:   *host,
+		User:   *user,
+		Db:     *db,
 		Assets: *assets,
-		Pass: *pass,
-		Log:  *logPath,
+		Pass:   *pass,
+		Log:    *logPath,
 	}
 
 	config, err := getConfig(flagConfig, *yamlPath)
@@ -48,6 +48,6 @@ func main() {
 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 	defer mysql.Close()
 
-	var checker = &AssetsCheck{MySql : mysql, AssetsPath : config.Assets};
+	var checker = &AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
 	checker.Check()
 }

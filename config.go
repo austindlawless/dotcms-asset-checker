@@ -8,12 +8,12 @@ import (
 )
 
 type Config struct {
-	Host string
-	User string
-	Db string
-	Pass string
+	Host   string
+	User   string
+	Db     string
+	Pass   string
 	Assets string
-	Log  string
+	Log    string
 }
 
 func getConfigFromYaml(yamlPath string) (Config, error) {

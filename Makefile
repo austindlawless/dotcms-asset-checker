@@ -13,5 +13,5 @@ build-linux:
 	/usr/local/go/bin/linux_amd64/go build
 
 test:
-	go test ./...
+	go test .
 

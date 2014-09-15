@@ -48,15 +48,21 @@ func main() {
 	defer mysql.Close()
 
 	switch *cmd {
-	case "dbcheck":
+	case "checkdatabase":
+		// get files from db -> queue
+		// check files from queue
 		generateBackup(config, mysql)
 		checkFiles(config)
-	case "checkbackup":
+	case "checkextract":
+		// read files from fs -> queue
+		// check files from queue
 		checkFiles(config)
-	case "genbackup":
+	case "genextract":
+		// get files from db -> queue
+		// write queue to fs
 		generateBackup(config, mysql)
 	default:
-		panic("-cmd is requred. options: dbcheck, checkbackup, genbackup")
+		panic("-cmd is requred. options: dbcheck, backupcheck, genbackup")
 	}
 
 }

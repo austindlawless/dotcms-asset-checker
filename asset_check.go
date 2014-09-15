@@ -19,7 +19,7 @@ func (f *AssetsCheck) Check() (bool, error) {
 	defer fields.Close()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	var structure_inode string
@@ -29,17 +29,18 @@ func (f *AssetsCheck) Check() (bool, error) {
 	for fields.Next() {
 		fields.Scan(&structure_inode, &field_type, &field_contentlet)
 
-		isBatchValid, err = f.areContentletsValid(structure_inode, field_contentlet)
+		isBatchValid, err := f.areContentletsValid(structure_inode, field_contentlet)
 		if err != nil {
-			return err
+			return false, err
 		}
+
 		if !isBatchValid {
 			isValid = false
 		}
 
 	}
 
-	return isValid
+	return isValid, nil
 }
 
 func (f *AssetsCheck) areContentletsValid(structure_inode string, asset_folder_name string) (bool, error) {
@@ -67,7 +68,7 @@ func (f *AssetsCheck) areContentletsValid(structure_inode string, asset_folder_n
 
 			pathExists, err := f.exists(path)
 			if err != nil {
-				return err
+				return false, err
 			}
 
 			if !pathExists {
@@ -77,7 +78,7 @@ func (f *AssetsCheck) areContentletsValid(structure_inode string, asset_folder_n
 		}
 	}
 
-	return isValid
+	return isValid, nil
 }
 
 func (f *AssetsCheck) exists(path string) (bool, error) {

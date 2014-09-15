@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	Host   string
-	User   string
-	Db     string
-	Pass   string
-	Assets string
-	Log    string
+	Host              string
+	User              string
+	Db                string
+	Pass              string
+	Assets            string
+	BackupStoragePath string
+	Log               string
 }
 
 func getConfigFromYaml(yamlPath string) (Config, error) {
@@ -71,6 +72,10 @@ func getConfig(flagCfg Config, yamlPath string) (Config, error) {
 
 	if len(flagCfg.Log) > 0 {
 		config.Log = flagCfg.Log
+	}
+
+	if len(flagCfg.BackupStoragePath) > 0 {
+		config.BackupStoragePath = flagCfg.BackupStoragePath
 	}
 
 	return config, nil

@@ -11,13 +11,8 @@ import (
 var _ = fmt.Print // For debugging; delete when done.
 var _ = log.Print // For debugging; delete when done.
 
-// wtf "cannot use NewMySql(config.User, config.Pass, config.Host, config.Db) (type *MySql) as type MySql in assignment"
-// var mysql MySql
-var config Config
-
-func setup() {
-	var err error
-	config, err = getConfig(Config{}, "test.yaml")
+func setup() (Config, *MySql) {
+	config, err := getConfig(Config{}, "test.yaml")
 
 	if err != nil {
 		panic(err)
@@ -25,17 +20,17 @@ func setup() {
 
 	os.RemoveAll(config.Assets)
 
-	// mysql = NewMySql(config.User, config.Pass, config.Host, config.Db)
+	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
+
 	// defer mysql.Close()
+
+	return config, mysql
 }
 
 func TestFileAssetsCheck(t *testing.T) {
-	setup()
+	config, mysql := setup()
 
-	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
-	defer mysql.Close()
-
-	setupTestAssets(mysql)
+	setupTestAssets(config, mysql)
 
 	check := AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
 
@@ -51,12 +46,9 @@ func TestFileAssetsCheck(t *testing.T) {
 }
 
 func TestInvalidFileAssetsCheck(t *testing.T) {
-	setup()
+	config, mysql := setup()
 
-	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
-	defer mysql.Close()
-
-	setupTestAssets(mysql)
+	setupTestAssets(config, mysql)
 
 	os.RemoveAll(config.Assets + "/0/1")
 
@@ -69,7 +61,7 @@ func TestInvalidFileAssetsCheck(t *testing.T) {
 	}
 }
 
-func setupTestAssets(mysql *MySql) {
+func setupTestAssets(config Config, mysql *MySql) {
 	fields, _ := mysql.db.Query("SELECT f.structure_inode, f.velocity_var_name FROM field f " +
 		"JOIN structure s ON s.inode = f.structure_inode " +
 		"WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")

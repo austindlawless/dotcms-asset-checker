@@ -18,16 +18,19 @@ func main() {
 	pass := flag.String("pass", "", "mysql password")
 	logPath := flag.String("log", "", "log path")
 	assets := flag.String("assets", "", "dotcms assets path")
+	backupStoragePath := flag.String("backupStoragePath", "", "path to place backup file")
+	cmd := flag.String("cmd", "", "dotcms assets path")
 
 	flag.Parse()
 
 	flagConfig := Config{
-		Host:   *host,
-		User:   *user,
-		Db:     *db,
-		Assets: *assets,
-		Pass:   *pass,
-		Log:    *logPath,
+		Host:              *host,
+		User:              *user,
+		Db:                *db,
+		Assets:            *assets,
+		Pass:              *pass,
+		Log:               *logPath,
+		BackupStoragePath: *backupStoragePath,
 	}
 
 	config, err := getConfig(flagConfig, *yamlPath)
@@ -48,6 +51,33 @@ func main() {
 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 	defer mysql.Close()
 
+	switch *cmd {
+	case "dbcheck":
+		doDbCheck(config, mysql)
+	case "genbackup":
+		generateBackup(config, mysql)
+	default:
+		panic("-cmd is requred. options: dbcheck, genbackup")
+	}
+
+}
+
+func generateBackup(config Config, mysql *MySql) {
+	var generator = &GenerateBackup{MySql: mysql, Config: config}
+
+	isValid, err := generator.MakeFile()
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
+	}
+
+	if !isValid {
+		os.Exit(1)
+	}
+}
+
+func doDbCheck(config Config, mysql *MySql) {
 	var checker = &AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
 
 	isValid, err := checker.Check()
@@ -59,5 +89,4 @@ func main() {
 	if !isValid {
 		os.Exit(1)
 	}
-
 }

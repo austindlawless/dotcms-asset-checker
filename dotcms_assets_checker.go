@@ -51,12 +51,12 @@ func main() {
 	case "dbcheck":
 		generateBackup(config, mysql)
 		checkFiles(config)
-	case "backupcheck":
+	case "checkbackup":
 		checkFiles(config)
 	case "genbackup":
 		generateBackup(config, mysql)
 	default:
-		panic("-cmd is requred. options: dbcheck, backupcheck, genbackup")
+		panic("-cmd is requred. options: dbcheck, checkbackup, genbackup")
 	}
 
 }

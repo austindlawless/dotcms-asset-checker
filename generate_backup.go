@@ -11,8 +11,6 @@ type GenerateBackup struct {
 }
 
 func (f *GenerateBackup) MakeFile() (bool, error) {
-	var storageFile = f.Config.BackupStoragePath + "/asset_paths.txt"
-
 	// Get files from Db
 	file_data, err := f.getFiles()
 	if err != nil {
@@ -21,20 +19,16 @@ func (f *GenerateBackup) MakeFile() (bool, error) {
 
 	// Attempt to remove if exists and create folder
 	os.RemoveAll(f.Config.BackupStoragePath)
-	err = os.MkdirAll(f.Config.BackupStoragePath, 0775)
-	if err != nil {
-		return false, err
-	}
 
 	// Create file via config
-	_, err = os.Create(storageFile)
+	_, err = os.Create(f.Config.BackupStoragePath)
 	if err != nil {
 		return false, err
 	}
 
 	// Write files to storage file
 	d1 := []byte(file_data)
-	err = ioutil.WriteFile(storageFile, d1, 0644)
+	err = ioutil.WriteFile(f.Config.BackupStoragePath, d1, 0644)
 	if err != nil {
 		return false, err
 	}

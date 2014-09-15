@@ -34,17 +34,13 @@ func main() {
 	}
 
 	config, err := getConfig(flagConfig, *yamlPath)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
+	checkError(err)
 
 	if config.Log != "" {
 		f, err := os.OpenFile(config.Log, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			fmt.Println("error opening file: %v", err)
-			os.Exit(2)
-		}
+
+		checkError(err)
+
 		log.SetOutput(f)
 	}
 
@@ -53,11 +49,14 @@ func main() {
 
 	switch *cmd {
 	case "dbcheck":
-		doDbCheck(config, mysql)
+		generateBackup(config, mysql)
+		checkFiles(config)
+	case "backupcheck":
+		checkFiles(config)
 	case "genbackup":
 		generateBackup(config, mysql)
 	default:
-		panic("-cmd is requred. options: dbcheck, genbackup")
+		panic("-cmd is requred. options: dbcheck, backupcheck, genbackup")
 	}
 
 }
@@ -67,26 +66,36 @@ func generateBackup(config Config, mysql *MySql) {
 
 	isValid, err := generator.MakeFile()
 
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
+	check(isValid, err)
+}
 
-	if !isValid {
-		os.Exit(1)
-	}
+func checkFiles(config Config) {
+	var checker = &AssetChecker{Config: config}
+
+	isValid, err := checker.Check()
+
+	check(isValid, err)
 }
 
 func doDbCheck(config Config, mysql *MySql) {
 	var checker = &AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
 
 	isValid, err := checker.Check()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
+
+	check(isValid, err)
+}
+
+func check(isValid bool, err error) {
+	checkError(err)
 
 	if !isValid {
 		os.Exit(1)
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(2)
 	}
 }

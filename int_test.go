@@ -27,7 +27,6 @@ func setup() (Config, *MySql) {
 }
 
 func TestFileValidAssetsCheck(t *testing.T) {
-	// Setup channels
 	fsQueue := make(chan string)
 	doneWorkSig := make(chan bool, 1)
 

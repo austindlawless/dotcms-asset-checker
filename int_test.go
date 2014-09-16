@@ -33,8 +33,12 @@ func TestFileValidAssetsCheck(t *testing.T) {
 	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
 	go channelChecker.CheckFiles()
 
-	os.Create("/tmp/somefile.txt")
-	fsQueue <- "/tmp/somefile.txt"
+	for i := 0; i < 4; i++ {
+		file := "/tmp/somefile" + i + ".txt"
+		os.Create(file)
+		fsQueue <- file
+	}
+
 	close(fsQueue)
 
 	<-doneWorkSig

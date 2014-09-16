@@ -51,44 +51,56 @@ func main() {
 	case "checkdatabase":
 		// get files from db -> queue
 		// check files from queue
-		generateBackup(config, mysql)
-		checkFiles(config)
+		checkFiles(config, mysql, "db")
 	case "checkextract":
 		// read files from fs -> queue
 		// check files from queue
-		checkFiles(config)
+		checkFiles(config, mysql, "fs")
 	case "genextract":
 		// get files from db -> queue
 		// write queue to fs
 		generateBackup(config, mysql)
 	default:
-		panic("-cmd is requred. options: dbcheck, backupcheck, genbackup")
+		panic("-cmd is requred. options: checkdatabase, checkextract, genextract")
 	}
 
 }
 
 func generateBackup(config Config, mysql *MySql) {
-	var generator = &GenerateBackup{MySql: mysql, Config: config}
+	fsQueue := make(chan string)
+	doneSig := make(chan bool, 1)
+	doneWorkSig := make(chan bool, 1)
 
-	isValid, err := generator.MakeFile()
+	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
+	var channelFsbackup = &AssetChannelFsbackup{Config: config, FileChannel: fsQueue, DoneSignal: doneWorkSig}
 
-	check(isValid, err)
+	channelFsbackup.Init()
+
+	go channelWorker.ReadFromDatabase()
+	go channelFsbackup.BackupFiles()
+
+	<-doneWorkSig
+	<-doneSig
 }
 
-func checkFiles(config Config) {
-	var checker = &AssetChecker{Config: config}
+func checkFiles(config Config, mysql *MySql, check string) {
+	fsQueue := make(chan string)
+	doneSig := make(chan bool, 1)
+	doneWorkSig := make(chan bool, 1)
 
-	isValid, err := checker.Check()
+	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
+	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
 
-	check(isValid, err)
-}
+	if check == "fs" {
+		go channelWorker.ReadFromFileSystem()
+	} else {
+		go channelWorker.ReadFromDatabase()
+	}
 
-func doDbCheck(config Config, mysql *MySql) {
-	var checker = &AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
+	go channelChecker.CheckFiles()
 
-	isValid, err := checker.Check()
-
-	check(isValid, err)
+	<-doneWorkSig
+	<-doneSig
 }
 
 func check(isValid bool, err error) {

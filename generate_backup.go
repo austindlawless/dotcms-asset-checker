@@ -6,8 +6,10 @@ import (
 )
 
 type GenerateBackup struct {
-	MySql  *MySql
-	Config Config
+	MySql      *MySql
+	Config     Config
+	Channel    chan string
+	DoneSignal chan bool
 }
 
 func (f *GenerateBackup) MakeFile() (bool, error) {
@@ -72,7 +74,11 @@ func (f *GenerateBackup) getFiles() (string, error) {
 			contentlets.Scan(&inode, &file_name)
 
 			if file_name != "" {
-				file_data += f.Config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder + "/" + file_name + "\n"
+				path := f.Config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder + "/" + file_name + "\n"
+
+				f.Channel <- path
+
+				file_data += path
 			}
 		}
 	}

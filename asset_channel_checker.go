@@ -1,24 +1,33 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 )
 
+// go routine
+func CheckAssets(assets chan string, dSig chan error) {
+	checker := &AssetChannelChecker{FileChannel: assets, DoneSignal: dSig}
+
+	checker.CheckFiles()
+}
+
 type AssetChannelChecker struct {
 	FileChannel chan string
-	DoneSignal  chan bool
+	DoneSignal  chan error
 }
 
 func (f *AssetChannelChecker) CheckFiles() {
-	var isValid = true
+	var err error
+
+	isValid := true
 
 	for file := range f.FileChannel {
 		exists, err := f.exists(file)
 
 		if err != nil {
-			log.Println(err)
-			os.Exit(2)
+			err = err
 		}
 
 		if !exists {
@@ -27,11 +36,11 @@ func (f *AssetChannelChecker) CheckFiles() {
 		}
 	}
 
-	f.DoneSignal <- true
-
 	if !isValid {
-		os.Exit(1)
+		err = errors.New("Missing files found")
 	}
+
+	f.DoneSignal <- err
 }
 
 func (f *AssetChannelChecker) exists(path string) (bool, error) {

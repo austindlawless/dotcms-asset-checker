@@ -5,7 +5,6 @@ import (
 	// "github.com/stretchr/testify/mock"
 	"log"
 	"os"
-	"strconv"
 	"testing"
 )
 
@@ -20,6 +19,7 @@ func setup() (Config, *MySql) {
 	}
 
 	os.RemoveAll(config.Assets)
+	os.MkdirAll(config.Assets, 0755)
 
 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 
@@ -27,70 +27,54 @@ func setup() (Config, *MySql) {
 }
 
 func TestFileValidAssetsCheck(t *testing.T) {
+	config, _ := setup()
+
 	fsQueue := make(chan string)
-	doneWorkSig := make(chan bool, 1)
+	doneWorkSig := make(chan error, 1)
 
 	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
 	go channelChecker.CheckFiles()
 
-	for i := 0; i < 4; i++ {
-		file := "/tmp/somefile" + strconv.FormatInt(int64(i), 10) + ".txt"
-		os.Create(file)
-		fsQueue <- file
-	}
+	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
+	queueFile(config.Assets+"/somefile2.txt", fsQueue, true)
+	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
 
 	close(fsQueue)
 
 	<-doneWorkSig
 }
 
-// func TestInvalidFileAssetsCheck(t *testing.T) {
-// 	config, mysql := setup()
+func TestFileInvalidAssetsCheck(t *testing.T) {
+	config, _ := setup()
 
-// 	setupTestAssets(config, mysql)
+	fsQueue := make(chan string)
+	doneWorkSig := make(chan error, 1)
 
-// 	os.RemoveAll(config.Assets + "/0/1")
+	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
+	go channelChecker.CheckFiles()
 
-// 	check := AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
+	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
+	queueFile(config.Assets+"/somefile2.txt", fsQueue, false)
+	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
 
-// 	valid, _ := check.Check()
+	close(fsQueue)
 
-// 	if valid {
-// 		t.Error("Check didn't find missing items")
-// 	}
-// }
+	err := <-doneWorkSig
 
-// func setupTestAssets(config Config, mysql *MySql) {
-// 	fields, _ := mysql.db.Query("SELECT f.structure_inode, f.velocity_var_name FROM field f " +
-// 		"JOIN structure s ON s.inode = f.structure_inode " +
-// 		"WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")
+	log.Println(err)
 
-// 	defer fields.Close()
+	if err == nil {
+		t.Error("There should have been an error found")
+	}
+}
 
-// 	var structure_inode string
-// 	var assets_folder string
-// 	var inode string
-// 	var file_name string
+func TestExtractCreation(t *testing.T) {
+}
 
-// 	for fields.Next() {
-// 		fields.Scan(&structure_inode, &assets_folder)
+func queueFile(file string, queue chan string, create bool) {
+	if create {
+		os.Create(file)
+	}
 
-// 		contentlets, _ := mysql.db.Query("SELECT cl.inode, cl.text3 AS assetToCheck "+
-// 			"FROM contentlet cl "+
-// 			"JOIN contentlet_version_info c ON c.identifier=cl.identifier AND c.working_inode=cl.inode "+
-// 			"WHERE structure_inode=?", structure_inode)
-
-// 		defer contentlets.Close()
-
-// 		for contentlets.Next() {
-// 			contentlets.Scan(&inode, &file_name)
-
-// 			if file_name != "" {
-// 				path := config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder
-
-// 				os.MkdirAll(path, 0775)
-// 				os.Create(path + "/" + file_name)
-// 			}
-// 		}
-// 	}
-// }
+	queue <- file
+}

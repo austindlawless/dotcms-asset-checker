@@ -6,10 +6,18 @@ import (
 	"os"
 )
 
+func CreateBackupExtract(config Config, assets chan string, dSig chan error) {
+	backup := &AssetChannelFsbackup{Config: config, FileChannel: assets, DoneSignal: dSig}
+
+	backup.Init()
+
+	backup.BackupFiles()
+}
+
 type AssetChannelFsbackup struct {
 	Config      Config
 	FileChannel chan string
-	DoneSignal  chan bool
+	DoneSignal  chan error
 }
 
 func (f *AssetChannelFsbackup) Init() {
@@ -24,7 +32,7 @@ func (f *AssetChannelFsbackup) Init() {
 	}
 }
 
-func (f *AssetChannelFsbackup) BackupFiles() error {
+func (f *AssetChannelFsbackup) BackupFiles() {
 	var file_contents string
 
 	// Read queue & store files in memory
@@ -35,12 +43,6 @@ func (f *AssetChannelFsbackup) BackupFiles() error {
 	// Write files to storage file
 	d1 := []byte(file_contents)
 	err := ioutil.WriteFile(f.Config.BackupStoragePath, d1, 0644)
-	if err != nil {
-		log.Println(err)
-		os.Exit(2)
-	}
 
-	f.DoneSignal <- true
-
-	return nil
+	f.DoneSignal <- err
 }

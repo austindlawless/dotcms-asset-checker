@@ -6,6 +6,18 @@ import (
 	"os"
 )
 
+func AssetsFromDatabase(mysql *MySql, config Config, assets chan string, dSig chan bool) {
+	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: assets, DoneSignal: dSig}
+
+	channelWorker.ReadFromDatabase()
+}
+
+func AssetsFromExtract(config Config, assets chan string, dSig chan bool) {
+	var channelWorker = &AssetChannelWorker{MySql: nil, Config: config, FileChannel: assets, DoneSignal: dSig}
+
+	channelWorker.ReadFromFileSystem()
+}
+
 type AssetChannelWorker struct {
 	MySql       *MySql
 	Config      Config
@@ -14,6 +26,8 @@ type AssetChannelWorker struct {
 }
 
 func (f *AssetChannelWorker) ReadFromDatabase() {
+	var err error
+
 	fields, err := f.MySql.db.Query("SELECT f.structure_inode, f.velocity_var_name FROM field f " +
 		"JOIN structure s ON s.inode = f.structure_inode " +
 		"WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")

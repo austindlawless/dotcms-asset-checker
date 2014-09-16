@@ -20,37 +20,37 @@ func main() {
 	defer mysql.Close()
 
 	// Setup channels
-	fsQueue := make(chan string)
+	filesQueue := make(chan string)
 	doneSig := make(chan bool, 1)
-	doneWorkSig := make(chan bool, 1)
-
-	// Channel processors
-	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
-	var channelFsbackup = &AssetChannelFsbackup{Config: config, FileChannel: fsQueue, DoneSignal: doneWorkSig}
-	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
+	doneWorkSig := make(chan error, 1)
 
 	// Process command
 	switch *cmd {
 	case "checkdatabase":
-		go channelWorker.ReadFromDatabase()
-		go channelChecker.CheckFiles()
+		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)
+		go CheckAssets(filesQueue, doneWorkSig)
 
 	case "checkextract":
-		go channelWorker.ReadFromFileSystem()
-		go channelChecker.CheckFiles()
+		go AssetsFromExtract(config, filesQueue, doneSig)
+		go CheckAssets(filesQueue, doneWorkSig)
 
 	case "genextract":
-		channelFsbackup.Init()
+		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)
+		go CreateBackupExtract(config, filesQueue, doneWorkSig)
 
-		go channelWorker.ReadFromDatabase()
-		go channelFsbackup.BackupFiles()
 	default:
 		panic("-cmd is requred. options: checkdatabase, checkextract, genextract")
 	}
 
 	// Wait for done signals before exiting
-	<-doneWorkSig
+	err := <-doneWorkSig
 	<-doneSig
+
+	// asserts error types ect...
+	if err != nil {
+		log.Println(err)
+		os.Exit(2)
+	}
 }
 
 func processConfig() Config {

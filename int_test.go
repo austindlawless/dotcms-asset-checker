@@ -5,6 +5,7 @@ import (
 	// "github.com/stretchr/testify/mock"
 	"log"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ func TestFileValidAssetsCheck(t *testing.T) {
 	go channelChecker.CheckFiles()
 
 	for i := 0; i < 4; i++ {
-		file := "/tmp/somefile" + i + ".txt"
+		file := "/tmp/somefile" + strconv.FormatInt(int64(i), 10) + ".txt"
 		os.Create(file)
 		fsQueue <- file
 	}

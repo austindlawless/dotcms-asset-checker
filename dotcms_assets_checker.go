@@ -103,14 +103,6 @@ func checkFiles(config Config, mysql *MySql, check string) {
 	<-doneSig
 }
 
-func check(isValid bool, err error) {
-	checkError(err)
-
-	if !isValid {
-		os.Exit(1)
-	}
-}
-
 func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)

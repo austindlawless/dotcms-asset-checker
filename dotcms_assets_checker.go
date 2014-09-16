@@ -10,6 +10,50 @@ import (
 var _ = log.Print
 
 func main() {
+	cmd := flag.String("cmd", "", "dotcms assets path")
+
+	// Get the config
+	config := processConfig()
+
+	// Setup mysql
+	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
+	defer mysql.Close()
+
+	// Setup channels
+	fsQueue := make(chan string)
+	doneSig := make(chan bool, 1)
+	doneWorkSig := make(chan bool, 1)
+
+	// Channel processors
+	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
+	var channelFsbackup = &AssetChannelFsbackup{Config: config, FileChannel: fsQueue, DoneSignal: doneWorkSig}
+	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
+
+	// Process command
+	switch *cmd {
+	case "checkdatabase":
+		go channelWorker.ReadFromDatabase()
+		go channelChecker.CheckFiles()
+
+	case "checkextract":
+		go channelWorker.ReadFromFileSystem()
+		go channelChecker.CheckFiles()
+
+	case "genextract":
+		channelFsbackup.Init()
+
+		go channelWorker.ReadFromDatabase()
+		go channelFsbackup.BackupFiles()
+	default:
+		panic("-cmd is requred. options: checkdatabase, checkextract, genextract")
+	}
+
+	// Wait for done signals before exiting
+	<-doneWorkSig
+	<-doneSig
+}
+
+func processConfig() Config {
 	yamlPath := flag.String("config", "default.yaml", "path to yaml config")
 
 	host := flag.String("host", "", "mysql host")
@@ -19,7 +63,6 @@ func main() {
 	logPath := flag.String("log", "", "log path")
 	assets := flag.String("assets", "", "dotcms assets path")
 	backupStoragePath := flag.String("backupStoragePath", "", "path to place backup file")
-	cmd := flag.String("cmd", "", "dotcms assets path")
 
 	flag.Parse()
 
@@ -33,6 +76,7 @@ func main() {
 		BackupStoragePath: *backupStoragePath,
 	}
 
+	// Config setup
 	config, err := getConfig(flagConfig, *yamlPath)
 	checkError(err)
 
@@ -44,63 +88,7 @@ func main() {
 		log.SetOutput(f)
 	}
 
-	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
-	defer mysql.Close()
-
-	switch *cmd {
-	case "checkdatabase":
-		// get files from db -> queue
-		// check files from queue
-		checkFiles(config, mysql, "db")
-	case "checkextract":
-		// read files from fs -> queue
-		// check files from queue
-		checkFiles(config, mysql, "fs")
-	case "genextract":
-		// get files from db -> queue
-		// write queue to fs
-		generateBackup(config, mysql)
-	default:
-		panic("-cmd is requred. options: checkdatabase, checkextract, genextract")
-	}
-
-}
-
-func generateBackup(config Config, mysql *MySql) {
-	fsQueue := make(chan string)
-	doneSig := make(chan bool, 1)
-	doneWorkSig := make(chan bool, 1)
-
-	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
-	var channelFsbackup = &AssetChannelFsbackup{Config: config, FileChannel: fsQueue, DoneSignal: doneWorkSig}
-
-	channelFsbackup.Init()
-
-	go channelWorker.ReadFromDatabase()
-	go channelFsbackup.BackupFiles()
-
-	<-doneWorkSig
-	<-doneSig
-}
-
-func checkFiles(config Config, mysql *MySql, check string) {
-	fsQueue := make(chan string)
-	doneSig := make(chan bool, 1)
-	doneWorkSig := make(chan bool, 1)
-
-	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: fsQueue, DoneSignal: doneSig}
-	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
-
-	if check == "fs" {
-		go channelWorker.ReadFromFileSystem()
-	} else {
-		go channelWorker.ReadFromDatabase()
-	}
-
-	go channelChecker.CheckFiles()
-
-	<-doneWorkSig
-	<-doneSig
+	return config
 }
 
 func checkError(err error) {

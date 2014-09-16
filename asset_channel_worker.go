@@ -63,7 +63,7 @@ func (f *AssetChannelWorker) ReadFromDatabase() {
 			contentlets.Scan(&inode, &file_name)
 
 			if file_name != "" {
-				f.FileChannel <- f.Config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder + "/" + file_name + "\n"
+				f.FileChannel <- f.Config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder + "/" + file_name
 			}
 		}
 	}

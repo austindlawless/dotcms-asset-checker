@@ -37,7 +37,7 @@ func (f *AssetChannelFsbackup) BackupFiles() {
 
 	// Read queue & store files in memory
 	for file := range f.FileChannel {
-		file_contents += file
+		file_contents += file + "\n"
 	}
 
 	// Write files to storage file

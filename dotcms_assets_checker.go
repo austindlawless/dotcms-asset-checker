@@ -76,7 +76,6 @@ func processConfig() Config {
 		BackupStoragePath: *backupStoragePath,
 	}
 
-	// Config setup
 	config, err := getConfig(flagConfig, *yamlPath)
 	checkError(err)
 

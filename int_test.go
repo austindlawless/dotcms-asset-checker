@@ -11,39 +11,49 @@ import (
 var _ = fmt.Print // For debugging; delete when done.
 var _ = log.Print // For debugging; delete when done.
 
-// func setup() (Config, *MySql) {
-// 	config, err := getConfig(Config{}, "test.yaml")
+func setup() (Config, *MySql) {
+	config, err := getConfig(Config{}, "test.yaml")
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	if err != nil {
+		panic(err)
+	}
 
-// 	os.RemoveAll(config.Assets)
+	os.RemoveAll(config.Assets)
 
-// 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
+	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 
-// 	// defer mysql.Close()
+	return config, mysql
+}
 
-// 	return config, mysql
-// }
+func TestFileValidAssetsCheck(t *testing.T) {
+	// Setup channels
+	fsQueue := make(chan string)
+	doneWorkSig := make(chan bool, 1)
 
-// func TestFileAssetsCheck(t *testing.T) {
-// 	config, mysql := setup()
+	var channelChecker = &AssetChannelChecker{FileChannel: fsQueue, DoneSignal: doneWorkSig}
+	go channelChecker.CheckFiles()
 
-// 	setupTestAssets(config, mysql)
+	os.Create("/tmp/somefile.txt")
+	fsQueue <- "/tmp/somefile.txt"
+	close(fsQueue)
 
-// 	check := AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
+	<-doneWorkSig
+	// config, mysql := setup()
 
-// 	valid, err := check.Check()
+	// setupTestAssets(config, mysql)
 
-// 	if !valid {
-// 		t.Error("Something was missing")
-// 	}
+	// check := AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
 
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// }
+	// valid, err := check.Check()
+
+	// if !valid {
+	// 	t.Error("Something was missing")
+	// }
+
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+}
 
 // func TestInvalidFileAssetsCheck(t *testing.T) {
 // 	config, mysql := setup()

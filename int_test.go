@@ -43,21 +43,6 @@ func TestFileValidAssetsCheck(t *testing.T) {
 	close(fsQueue)
 
 	<-doneWorkSig
-	// config, mysql := setup()
-
-	// setupTestAssets(config, mysql)
-
-	// check := AssetsCheck{MySql: mysql, AssetsPath: config.Assets}
-
-	// valid, err := check.Check()
-
-	// if !valid {
-	// 	t.Error("Something was missing")
-	// }
-
-	// if err != nil {
-	// 	t.Error(err)
-	// }
 }
 
 // func TestInvalidFileAssetsCheck(t *testing.T) {

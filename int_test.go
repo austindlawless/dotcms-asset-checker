@@ -34,9 +34,9 @@ func TestFileValidAssetsCheck(t *testing.T) {
 
 	go CheckAssets(fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
+	queueFile(config.Assets+"/1", fsQueue, true)
+	queueFile(config.Assets+"/2", fsQueue, true)
+	queueFile(config.Assets+"/3", fsQueue, true)
 
 	close(fsQueue)
 
@@ -52,9 +52,9 @@ func TestFileInvalidAssetsCheck(t *testing.T) {
 
 	go CheckAssets(fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, false)
-	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
+	queueFile(config.Assets+"/1", fsQueue, true)
+	queueFile(config.Assets+"/2", fsQueue, false)
+	queueFile(config.Assets+"/3", fsQueue, true)
 
 	close(fsQueue)
 
@@ -70,8 +70,8 @@ func TestExtractCreation(t *testing.T) {
 
 	go CreateBackupExtract(config, fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, true)
+	queueFile(config.Assets+"/1", fsQueue, true)
+	queueFile(config.Assets+"/2", fsQueue, true)
 	close(fsQueue)
 
 	err := <-doneWorkSig
@@ -82,7 +82,7 @@ func TestExtractCreation(t *testing.T) {
 
 	contents := getExtractContents(config)
 
-	if contents != config.Assets+"/somefile1.txt"+config.Assets+"/somefile2.txt" {
+	if contents != config.Assets+"/1"+config.Assets+"/2" {
 		t.Error("Weird file contents")
 	}
 }

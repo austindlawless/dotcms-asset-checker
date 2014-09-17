@@ -28,9 +28,12 @@ type AssetChannelWorker struct {
 func (f *AssetChannelWorker) ReadFromDatabase() {
 	var err error
 
-	fields, err := f.MySql.db.Query("SELECT f.structure_inode, f.velocity_var_name FROM field f " +
-		"JOIN structure s ON s.inode = f.structure_inode " +
-		"WHERE f.field_type IN ('binary', 'image', 'file') AND s.structuretype=4 ORDER BY f.structure_inode;")
+	fields, err := f.MySql.db.Query("SELECT CONCAT('" + f.Config.Assets + "', SUBSTRING(c.inode, 1, 1), '/', SUBSTRING(c.inode, 2, 1), '/', c.inode, '/', f.velocity_var_name) AS assetPath " +
+		"FROM contentlet c " +
+		"INNER JOIN contentlet_version_info ci ON ci.identifier=c.identifier AND ci.working_inode=c.inode " +
+		"INNER JOIN field f ON c.structure_inode=f.structure_inode " +
+		"WHERE f.field_type IN ('binary', 'file') AND f.`required`=1 " +
+		"ORDER BY c.inode;")
 
 	defer fields.Close()
 
@@ -39,33 +42,12 @@ func (f *AssetChannelWorker) ReadFromDatabase() {
 		os.Exit(2)
 	}
 
-	var structure_inode string
 	var assets_folder string
-	var inode string
-	var file_name string
 
 	for fields.Next() {
-		fields.Scan(&structure_inode, &assets_folder)
+		fields.Scan(&assets_folder)
 
-		contentlets, err := f.MySql.db.Query("SELECT cl.inode, cl.text3 AS assetToCheck "+
-			"FROM contentlet cl "+
-			"JOIN contentlet_version_info c ON c.identifier=cl.identifier AND c.working_inode=cl.inode "+
-			"WHERE structure_inode=?", structure_inode)
-
-		defer contentlets.Close()
-
-		if err != nil {
-			log.Println(err)
-			os.Exit(2)
-		}
-
-		for contentlets.Next() {
-			contentlets.Scan(&inode, &file_name)
-
-			if file_name != "" {
-				f.FileChannel <- f.Config.Assets + "/" + inode[0:1] + "/" + inode[1:2] + "/" + inode + "/" + assets_folder + "/" + file_name
-			}
-		}
+		f.FileChannel <- assets_folder
 	}
 
 	close(f.FileChannel)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -23,15 +24,21 @@ func (f *AssetChannelChecker) CheckFiles() {
 
 	isValid := true
 
-	for file := range f.FileChannel {
-		exists, err := f.exists(file)
+	for dir := range f.FileChannel {
+		exists, err := f.exists(dir)
 
 		if err != nil {
 			err = err
 		}
 
 		if !exists {
-			log.Println("MISSING: " + file)
+			log.Println("MISSING: " + dir)
+			isValid = false
+		}
+
+		files, _ := ioutil.ReadDir(dir)
+		if len(files) <= 0 {
+			log.Println("EMPTY DIR: " + dir)
 			isValid = false
 		}
 	}

@@ -34,9 +34,15 @@ func TestFileValidAssetsCheck(t *testing.T) {
 
 	go CheckAssets(fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
+	// setup dirs + files on fs
+	os.Mkdir(config.Assets+"/1", 0755)
+	os.Mkdir(config.Assets+"/2", 0755)
+	os.Create(config.Assets + "/1/asdf.txt")
+	os.Create(config.Assets + "/2/asdf.txt")
+
+	// add dirs to queue
+	fsQueue <- config.Assets + "/1"
+	fsQueue <- config.Assets + "/2"
 
 	close(fsQueue)
 
@@ -47,14 +53,19 @@ func TestFileValidAssetsCheck(t *testing.T) {
 	}
 }
 
-func TestFileInvalidAssetsCheck(t *testing.T) {
+func TestEmptyDirAssetsCheck(t *testing.T) {
 	config, _, fsQueue, doneWorkSig := setup()
 
 	go CheckAssets(fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, false)
-	queueFile(config.Assets+"/somefile3.txt", fsQueue, true)
+	// setup dirs + files on fs
+	os.Mkdir(config.Assets+"/1", 0755)
+	os.Mkdir(config.Assets+"/2", 0755)
+	os.Create(config.Assets + "/1/asdf.txt")
+
+	// add dir + empty dir to queue
+	fsQueue <- config.Assets + "/1"
+	fsQueue <- config.Assets + "/2"
 
 	close(fsQueue)
 
@@ -70,8 +81,9 @@ func TestExtractCreation(t *testing.T) {
 
 	go CreateBackupExtract(config, fsQueue, doneWorkSig)
 
-	queueFile(config.Assets+"/somefile1.txt", fsQueue, true)
-	queueFile(config.Assets+"/somefile2.txt", fsQueue, true)
+	fsQueue <- config.Assets + "/1"
+	fsQueue <- config.Assets + "/2"
+
 	close(fsQueue)
 
 	err := <-doneWorkSig
@@ -82,7 +94,7 @@ func TestExtractCreation(t *testing.T) {
 
 	contents := getExtractContents(config)
 
-	if contents != config.Assets+"/somefile1.txt"+config.Assets+"/somefile2.txt" {
+	if contents != config.Assets+"/1"+config.Assets+"/2" {
 		t.Error("Weird file contents")
 	}
 }
@@ -99,12 +111,4 @@ func getExtractContents(config Config) string {
 	}
 
 	return contents
-}
-
-func queueFile(file string, queue chan string, create bool) {
-	if create {
-		os.Create(file)
-	}
-
-	queue <- file
 }

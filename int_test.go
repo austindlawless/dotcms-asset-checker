@@ -32,17 +32,17 @@ func setup() (Config, *MySql, chan string, chan error) {
 func TestFileValidAssetsCheck(t *testing.T) {
 	config, _, fsQueue, doneWorkSig := setup()
 
-	go CheckAssets(fsQueue, doneWorkSig)
+	go CheckAssets(config, fsQueue, doneWorkSig)
 
 	// setup dirs + files on fs
-	os.Mkdir(config.Assets+"/1", 0755)
-	os.Mkdir(config.Assets+"/2", 0755)
-	os.Create(config.Assets + "/1/asdf.txt")
-	os.Create(config.Assets + "/2/asdf.txt")
+	os.MkdirAll(config.Assets+"/1/0", 0755)
+	os.MkdirAll(config.Assets+"/2/4", 0755)
+	os.Create(config.Assets + "/1/0/asdf.txt")
+	os.Create(config.Assets + "/2/4/asdf.txt")
 
 	// add dirs to queue
-	fsQueue <- config.Assets + "/1"
-	fsQueue <- config.Assets + "/2"
+	fsQueue <- "1/0"
+	fsQueue <- "2/4"
 
 	close(fsQueue)
 
@@ -56,16 +56,16 @@ func TestFileValidAssetsCheck(t *testing.T) {
 func TestEmptyDirAssetsCheck(t *testing.T) {
 	config, _, fsQueue, doneWorkSig := setup()
 
-	go CheckAssets(fsQueue, doneWorkSig)
+	go CheckAssets(config, fsQueue, doneWorkSig)
 
 	// setup dirs + files on fs
-	os.Mkdir(config.Assets+"/1", 0755)
-	os.Mkdir(config.Assets+"/2", 0755)
-	os.Create(config.Assets + "/1/asdf.txt")
+	os.MkdirAll(config.Assets+"/1/0", 0755)
+	os.MkdirAll(config.Assets+"/2/4", 0755)
+	os.Create(config.Assets + "/1/0/asdf.txt")
 
 	// add dir + empty dir to queue
-	fsQueue <- config.Assets + "/1"
-	fsQueue <- config.Assets + "/2"
+	fsQueue <- "1/0"
+	fsQueue <- "2/4"
 
 	close(fsQueue)
 
@@ -81,8 +81,8 @@ func TestExtractCreation(t *testing.T) {
 
 	go CreateBackupExtract(config, fsQueue, doneWorkSig)
 
-	fsQueue <- config.Assets + "/1"
-	fsQueue <- config.Assets + "/2"
+	fsQueue <- "1/2/image"
+	fsQueue <- "2/4/fileAsset"
 
 	close(fsQueue)
 
@@ -94,7 +94,7 @@ func TestExtractCreation(t *testing.T) {
 
 	contents := getExtractContents(config)
 
-	if contents != config.Assets+"/1"+config.Assets+"/2" {
+	if contents != "1/2/image"+"2/4/fileAsset" {
 		t.Error("Weird file contents")
 	}
 }

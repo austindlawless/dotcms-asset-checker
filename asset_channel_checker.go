@@ -8,8 +8,8 @@ import (
 )
 
 // go routine
-func CheckAssets(assets chan string, dSig chan error) {
-	checker := &AssetChannelChecker{FileChannel: assets, DoneSignal: dSig}
+func CheckAssets(config Config, assets chan string, dSig chan error) {
+	checker := &AssetChannelChecker{Config: config, FileChannel: assets, DoneSignal: dSig}
 
 	checker.CheckFiles()
 }
@@ -17,6 +17,7 @@ func CheckAssets(assets chan string, dSig chan error) {
 type AssetChannelChecker struct {
 	FileChannel chan string
 	DoneSignal  chan error
+	Config      Config
 }
 
 func (f *AssetChannelChecker) CheckFiles() {
@@ -25,21 +26,23 @@ func (f *AssetChannelChecker) CheckFiles() {
 	isValid := true
 
 	for dir := range f.FileChannel {
-		exists, err := f.exists(dir)
+		absDir := f.Config.Assets + "/" + dir
+
+		exists, err := f.exists(absDir)
 
 		if err != nil {
 			err = err
 		}
 
 		if !exists {
-			log.Println("MISSING: " + dir)
+			log.Println("MISSING: " + absDir)
 			isValid = false
-		}
-
-		files, _ := ioutil.ReadDir(dir)
-		if len(files) <= 0 {
-			log.Println("EMPTY DIR: " + dir)
-			isValid = false
+		} else {
+			files, _ := ioutil.ReadDir(absDir)
+			if len(files) <= 0 {
+				log.Println("EMPTY DIR: " + absDir)
+				isValid = false
+			}
 		}
 	}
 

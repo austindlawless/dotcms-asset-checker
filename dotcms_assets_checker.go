@@ -28,11 +28,11 @@ func main() {
 	switch *cmd {
 	case "checkdatabase":
 		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)
-		go CheckAssets(filesQueue, doneWorkSig)
+		go CheckAssets(config, filesQueue, doneWorkSig)
 
 	case "checkextract":
 		go AssetsFromExtract(config, filesQueue, doneSig)
-		go CheckAssets(filesQueue, doneWorkSig)
+		go CheckAssets(config, filesQueue, doneWorkSig)
 
 	case "genextract":
 		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)

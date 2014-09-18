@@ -62,7 +62,7 @@ func processConfig() Config {
 	pass := flag.String("pass", "", "mysql password")
 	logPath := flag.String("log", "", "log path")
 	assets := flag.String("assets", "", "dotcms assets path")
-	backupStoragePath := flag.String("backupStoragePath", "", "path to place backup file")
+	backupStoragePath := flag.String("backupstoragepath", "", "path to place backup file")
 
 	flag.Parse()
 

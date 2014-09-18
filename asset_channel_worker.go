@@ -28,7 +28,7 @@ type AssetChannelWorker struct {
 func (f *AssetChannelWorker) ReadFromDatabase() {
 	var err error
 
-	fields, err := f.MySql.db.Query("SELECT CONCAT('" + f.Config.Assets + "', '/', SUBSTRING(c.inode, 1, 1), '/', SUBSTRING(c.inode, 2, 1), '/', c.inode, '/', f.velocity_var_name) AS assetPath " +
+	fields, err := f.MySql.db.Query("SELECT CONCAT(SUBSTRING(c.inode, 1, 1), '/', SUBSTRING(c.inode, 2, 1), '/', c.inode, '/', f.velocity_var_name) AS assetPath " +
 		"FROM contentlet c " +
 		"INNER JOIN contentlet_version_info ci ON ci.identifier=c.identifier AND ci.working_inode=c.inode " +
 		"INNER JOIN field f ON c.structure_inode=f.structure_inode " +

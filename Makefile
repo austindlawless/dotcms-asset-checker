@@ -4,7 +4,6 @@ all: build
 deps:
 	go get github.com/go-sql-driver/mysql
 	go get gopkg.in/yaml.v1
-	go get github.com/stretchr/testify/mock
 
 build:
 	go build

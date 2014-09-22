@@ -24,15 +24,15 @@ func setup() (Config, *MySql, chan string, chan error) {
 	mysql := NewMySql(config.User, config.Pass, config.Host, config.Db)
 
 	fsQueue := make(chan string)
-	doneWorkSig := make(chan error, 1)
+	errors := make(chan error, 1)
 
-	return config, mysql, fsQueue, doneWorkSig
+	return config, mysql, fsQueue, errors
 }
 
 func TestFileValidAssetsCheck(t *testing.T) {
-	config, _, fsQueue, doneWorkSig := setup()
+	config, _, fsQueue, errors := setup()
 
-	go CheckAssets(config, fsQueue, doneWorkSig)
+	go CheckAssets(config, fsQueue, errors)
 
 	// setup dirs + files on fs
 	os.MkdirAll(config.Assets+"/1/0", 0755)
@@ -46,7 +46,7 @@ func TestFileValidAssetsCheck(t *testing.T) {
 
 	close(fsQueue)
 
-	err := <-doneWorkSig
+	err := <-errors
 
 	if err != nil {
 		t.Error("This should have passed")
@@ -54,9 +54,9 @@ func TestFileValidAssetsCheck(t *testing.T) {
 }
 
 func TestEmptyDirAssetsCheck(t *testing.T) {
-	config, _, fsQueue, doneWorkSig := setup()
+	config, _, fsQueue, errors := setup()
 
-	go CheckAssets(config, fsQueue, doneWorkSig)
+	go CheckAssets(config, fsQueue, errors)
 
 	// setup dirs + files on fs
 	os.MkdirAll(config.Assets+"/1/0", 0755)
@@ -69,7 +69,7 @@ func TestEmptyDirAssetsCheck(t *testing.T) {
 
 	close(fsQueue)
 
-	err := <-doneWorkSig
+	err := <-errors
 
 	if err == nil {
 		t.Error("There should have been an error found")
@@ -77,16 +77,16 @@ func TestEmptyDirAssetsCheck(t *testing.T) {
 }
 
 func TestExtractCreation(t *testing.T) {
-	config, _, fsQueue, doneWorkSig := setup()
+	config, _, fsQueue, errors := setup()
 
-	go CreateBackupExtract(config, fsQueue, doneWorkSig)
+	go CreateBackupExtract(config, fsQueue, errors)
 
 	fsQueue <- "1/2/image"
 	fsQueue <- "2/4/fileAsset"
 
 	close(fsQueue)
 
-	err := <-doneWorkSig
+	err := <-errors
 
 	if err != nil {
 		t.Error("This should have passed")

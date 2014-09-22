@@ -21,35 +21,41 @@ func main() {
 
 	// Setup channels
 	filesQueue := make(chan string)
-	doneSig := make(chan bool, 1)
-	doneWorkSig := make(chan error, 1)
+	workerErrors := make(chan error, 1)
+	errors := make(chan error, 1)
 
 	// Process command
 	switch *cmd {
 	case "checkdatabase":
-		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)
-		go CheckAssets(config, filesQueue, doneWorkSig)
+		go AssetsFromDatabase(mysql, config, filesQueue, workerErrors)
+		go CheckAssets(config, filesQueue, errors)
 
 	case "checkextract":
-		go AssetsFromExtract(config, filesQueue, doneSig)
-		go CheckAssets(config, filesQueue, doneWorkSig)
+		go AssetsFromExtract(config, filesQueue, workerErrors)
+		go CheckAssets(config, filesQueue, errors)
 
 	case "genextract":
-		go AssetsFromDatabase(mysql, config, filesQueue, doneSig)
-		go CreateBackupExtract(config, filesQueue, doneWorkSig)
+		go AssetsFromDatabase(mysql, config, filesQueue, workerErrors)
+		go CreateBackupExtract(config, filesQueue, errors)
 
 	default:
 		panic("-cmd is requred. options: checkdatabase, checkextract, genextract")
 	}
 
 	// Wait for done signals before exiting
-	err := <-doneWorkSig
-	<-doneSig
+	err := <-errors
+	wrkErr := <-workerErrors
+
+	// critical errors
+	if wrkErr != nil {
+		log.Println(err)
+		os.Exit(2)
+	}
 
 	// asserts error types ect...
 	if err != nil {
 		log.Println(err)
-		os.Exit(2)
+		os.Exit(1)
 	}
 }
 

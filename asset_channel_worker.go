@@ -2,18 +2,17 @@ package main
 
 import (
 	"bufio"
-	"log"
 	"os"
 )
 
-func AssetsFromDatabase(mysql *MySql, config Config, assets chan string, dSig chan bool) {
-	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: assets, DoneSignal: dSig}
+func AssetsFromDatabase(mysql *MySql, config Config, assets chan string, errors chan error) {
+	var channelWorker = &AssetChannelWorker{MySql: mysql, Config: config, FileChannel: assets, DoneSignal: errors}
 
 	channelWorker.ReadFromDatabase()
 }
 
-func AssetsFromExtract(config Config, assets chan string, dSig chan bool) {
-	var channelWorker = &AssetChannelWorker{MySql: nil, Config: config, FileChannel: assets, DoneSignal: dSig}
+func AssetsFromExtract(config Config, assets chan string, errors chan error) {
+	var channelWorker = &AssetChannelWorker{MySql: nil, Config: config, FileChannel: assets, DoneSignal: errors}
 
 	channelWorker.ReadFromFileSystem()
 }
@@ -22,7 +21,7 @@ type AssetChannelWorker struct {
 	MySql       *MySql
 	Config      Config
 	FileChannel chan string
-	DoneSignal  chan bool
+	DoneSignal  chan error
 }
 
 func (f *AssetChannelWorker) ReadFromDatabase() {
@@ -38,8 +37,9 @@ func (f *AssetChannelWorker) ReadFromDatabase() {
 	defer fields.Close()
 
 	if err != nil {
-		log.Println(err)
-		os.Exit(2)
+		close(f.FileChannel)
+		f.DoneSignal <- err
+		return
 	}
 
 	var assets_folder string
@@ -52,7 +52,7 @@ func (f *AssetChannelWorker) ReadFromDatabase() {
 
 	close(f.FileChannel)
 
-	f.DoneSignal <- true
+	f.DoneSignal <- nil
 }
 
 func (f *AssetChannelWorker) ReadFromFileSystem() {
@@ -60,8 +60,9 @@ func (f *AssetChannelWorker) ReadFromFileSystem() {
 	defer file.Close()
 
 	if err != nil {
-		log.Println(err)
-		os.Exit(2)
+		close(f.FileChannel)
+		f.DoneSignal <- err
+		return
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -71,5 +72,5 @@ func (f *AssetChannelWorker) ReadFromFileSystem() {
 
 	close(f.FileChannel)
 
-	f.DoneSignal <- true
+	f.DoneSignal <- nil
 }

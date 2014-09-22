@@ -8,15 +8,15 @@ import (
 )
 
 // go routine
-func CheckAssets(config Config, assets chan string, dSig chan error) {
-	checker := &AssetChannelChecker{Config: config, FileChannel: assets, DoneSignal: dSig}
+func CheckAssets(config Config, assets chan string, errors chan error) {
+	checker := &AssetChannelChecker{Config: config, FileChannel: assets, Errors: errors}
 
 	checker.CheckFiles()
 }
 
 type AssetChannelChecker struct {
 	FileChannel chan string
-	DoneSignal  chan error
+	Errors      chan error
 	Config      Config
 }
 
@@ -50,7 +50,7 @@ func (f *AssetChannelChecker) CheckFiles() {
 		err = errors.New("Missing files found")
 	}
 
-	f.DoneSignal <- err
+	f.Errors <- err
 }
 
 func (f *AssetChannelChecker) exists(path string) (bool, error) {

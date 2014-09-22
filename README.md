@@ -1,5 +1,7 @@
 # dotCMS Assets Checker
 
+[![Build Status](https://drone.io/github.com/BancVue/dotcms-asset-checker/status.png)](https://drone.io/github.com/BancVue/dotcms-asset-checker/latest)
+
 Commands
 --------
 

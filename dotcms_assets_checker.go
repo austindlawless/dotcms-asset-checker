@@ -52,7 +52,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	// asserts error types ect...
+	// analysis errors
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)

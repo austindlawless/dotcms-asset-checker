@@ -25,7 +25,7 @@ func getConfigFromYaml(yamlPath string) (Config, error) {
 	}
 
 	if _, err := os.Stat(yamlPath); err != nil {
-		return config, fmt.Errorf("config path not valid")
+		return config, fmt.Errorf("config path " + yamlPath + " not valid")
 	}
 
 	ymlData, err := ioutil.ReadFile(yamlPath)

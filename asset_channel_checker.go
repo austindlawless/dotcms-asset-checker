@@ -28,11 +28,7 @@ func (f *AssetChannelChecker) CheckFiles() {
 	for dir := range f.FileChannel {
 		absDir := f.Config.Assets + "/" + dir
 
-		exists, err := f.exists(absDir)
-
-		if err != nil {
-			err = err
-		}
+		exists, _ := f.exists(absDir)
 
 		if !exists {
 			log.Println("MISSING: " + absDir)

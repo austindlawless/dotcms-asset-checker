@@ -37,4 +37,5 @@ Examples
 Tests
 -----
 
+	# Depends on make ci
 	$ make test
